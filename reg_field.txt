@@ -1,0 +1,52 @@
+implement a 25-bit register in a verification env whose structure is mentioned below.
+reserved 4 bits,data 8 bits,addr 8 bits,mode 3 bits,en 2 bits.
+
+import uvm_pkg::*;
+`include "uvm_macros.svh"
+
+//----------------
+// environment env
+
+class my_reg extends uvm_reg;
+  `uvm_object_utils(my_reg)
+  uvm_reg_field en;
+  uvm_reg_field mode;
+  uvm_reg_field addr;
+  uvm_reg_field data;
+  uvm_reg_field reserved;
+  function new(string name="my_reg");
+    super.new(name,25,UVM_NO_COVERAGE);
+  endfunction
+  function void build();
+    en=uvm_reg_field::type_id::create("en");
+    mode=uvm_reg_field::type_id::create("mode");
+    addr=uvm_reg_field::type_id::create("addr");
+    data=uvm_reg_field::type_id::create("data");
+    reserved=uvm_reg_field::type_id::create("reserved");
+    en.configure(this,2,0,"RW",0,'0,1,1,1);
+    mode.configure(this,3,2,"RW",0,'0,1,1,1);
+    addr.configure(this,8,5,"RW",0,'0,1,1,1);
+    data.configure(this,8,13,"RW",0,'0,1,1,1);
+    reserved.configure(this,4,21,"RW",0,'0,1,1,1);
+  endfunction
+endclass
+    module tb;
+
+  my_reg r;
+
+  initial begin
+    r = new("r");
+    r.build();
+
+    $display("Register name = %s", r.get_name());
+    $display("Register size = %0d", r.get_n_bits());
+
+    $display("EN field     = %s", r.en.get_name());
+    $display("MODE field   = %s", r.mode.get_name());
+    $display("ADDR field   = %s", r.addr.get_name());
+    $display("DATA field   = %s", r.data.get_name());
+    $display("RESERVED     = %s", r.reserved.get_name());
+  end
+
+endmodule
+  
