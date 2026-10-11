@@ -1,0 +1,55 @@
+module tb();
+bit clk;
+bit rst;
+logic [3:0]serial_in;
+logic shift_left;
+logic shift_right;
+
+propery reset;
+(!rst) |=>(shift_reg==4'b0000);
+endproperty
+
+property left_shift;
+@(posedge clk) disable_iff(!rst);
+shift_left |=>serial_in == {$past(shift_reg[2:0],$past(shift_reg)};
+endproperty
+
+property right_shift;
+@(posedge clk) disable_iff(!rst);
+shift_right |=>serial_in == {$past(shift_reg),$past(shift_reg[3:1])};
+endproperty
+
+property hold_check;
+@(posedge clk) disable_iff(!rst);
+(!shift_left && !shift_right) |=>(shift_reg == !shift_reg);
+endproperty
+
+assert_property(reset);
+assert_property(left_shift);
+assert_property(right_shift);
+assert_property(hold_check);
+
+ initial
+begin
+forever #5 clk=~clk;
+rst=0;
+serial_in=0;
+shift_left=0;
+shift_right=0;
+@(negedge clk);
+rst=1;
+@(negedge clk);
+serial_in=0;
+shift_right=1;
+@(negedge clk);
+shift_right=0;
+@(negedge clk);
+serial_in=1;
+shift_left=1;
+@(negedge clk);
+shift_left=0;
+@(negedge clk);
+$finish;
+end
+endmodule
+
