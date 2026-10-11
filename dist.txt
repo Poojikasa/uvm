@@ -1,0 +1,44 @@
+Create a class Exercise2 containing:
+1. Two random variables: an 8-bit data and a 4-bit address.
+2. A non-random variable parity, which stores the parity bit of data.
+Apply constraints such that:
+- data is always equal to 10.
+- The probability of address == 0 is 5%.
+- The probability of address being between [1:12] is 85%.
+- The probability of address being between [13:15] is 10%.
+3. Add a function calculate_parity() to compute the parity bit of data.
+4. Modify the randomization logic so that:
+- If address is even, the data value remains fixed at 10.
+- If address is odd, the data value is incremented by 1 before computing the parity.
+5. Construct an object of Exercise2 and randomize it in an initial block for 10 iterations.
+6. Check the randomization status and print data, address, and parity.
+
+class exercise;
+  rand bit[7:0]data;
+  rand bit[3:0]address;
+  int parity;
+  constraint c{data==10;}
+  constraint d{address dist{0:=5,
+                    [1:12]:=85,
+                    [13:15]:=10};}
+  function void calculate_parity();
+    parity=^data;
+  endfunction
+  function void post_randomize();
+    if(address%2!=0)
+      data=data+1;
+    calculate_parity();
+  endfunction
+endclass
+  module tb();
+    exercise e;
+    initial
+      begin
+        e=new();
+        repeat(10)
+          begin
+            assert(e.randomize());
+            $display("address=%0d,data=%0d,parity=%0d",e.address,e.data,e.parity);
+          end
+      end
+  endmodule
