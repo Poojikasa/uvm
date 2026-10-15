@@ -1,0 +1,314 @@
+UVM Sequence Arbitration — Question
+Write only the body() implementations for the following four sequences. Do not write the test or driver code.
+1. xseq_high — Set priority to 500. Generate 5 sequence items. Use m_sequencer.lock() and m_sequencer.unlock() to ensure that the first 3 items execute without interruption.
+2. xseq_medium — Set priority to 300. Generate 6 sequence items and implement arbitration after every 9 items.
+3. xseq_low — Set priority to 200. Generate 4 sequence items, but wait until at least one item from xseq_high has executed before starting.
+4. xseq_burst — Set priority to 400. Generate 3 sequence items using m_sequencer.grab() and m_sequencer.ungrab() to obtain exclusive access.
+For every sequence item, display the sequence name, transaction number, and simulation time using $display().
+
+class rseq_high extends uvm_sequence#(txn);
+`uvm_object_utils(rseq_high)
+function new(string name="rseq_high");
+super.new(name);
+endfunction
+task body();
+my_sequencer sqr;
+txn t;
+m_sequencer.lock(this);
+for(int i=1;i<=3;i++)
+begin
+t=txn::type_id::create("t");
+start_item(t);
+$display("rseq_high txn=%0d time=%0t",i,$time);
+if(i==1)
+begin
+$cast(sqr,m_sequencer);
+sqr.high_started=1;
+end
+finish_item(t);
+end
+m_sequencer.unlock(this);
+
+
+for(int i=1;i<=2;i++)
+begin
+txn t;
+t=txn::type_id::create("t");
+m_sequencer.lock(this);
+start_item(t);
+$display("rseq high txn=%0d time=%0t",i,$time);
+m_sequencer.unlock(this);
+finish_item(t);
+end
+endtask
+endclass
+
+
+class rseq_medium extends uvm_sequence#(txn);
+`uvm_object_utils(rseq_medium)
+function new(string name="rseq_medium");
+super.new(name);
+endfunction
+task body();
+txn t;
+t=txn::type_id::create("t");
+//start_item(t);
+for(int i=1;i<=6;i++)
+begin
+if(i%2==1)
+m_sequencer.lock(this);
+start_item(t);
+$display("rseq_medium txn=%0d time=%0t",i,$time);
+finish_item(t);
+if(i%2==0)
+m_sequencer.unlock(this);
+end
+endtask
+endclass
+
+
+class rseq_low extends uvm_sequence#(txn);
+`uvm_object_utils(rseq_low)
+function new(string name="rseq_low");
+super.new(name);
+endfunction
+task body();
+txn t;
+my_sequencer sqr;
+$cast(sqr,m_sequencer);
+wait(sqr.high_started==1);
+//m_sequencer.lock(this);
+t=txn::type_id::create("t");
+for(int i=1;i<=4;i++)
+begin
+start_item(t);
+$display("rseq_low txn=%0d time=%0t",i,$time);
+//m_sequencer.unlock(this);
+finish_item(t);
+end
+endtask
+endclass
+
+
+class rseq_burst extends uvm_sequence#(txn);
+`uvm_object_utils(rseq_burst)
+function new(string name="rseq_burst");
+super.new(name);
+endfunction
+task body();
+txn t;
+for(int i=1;i<=3;i++)
+begin
+m_sequencer.grab(this);
+t=txn::type_id::create("t");
+start_item(t);
+$display("rseq_burst txn=%0d time=%0t",i,$time);
+finish_item(t);
+m_sequencer.ungrab(this);
+end
+endtask
+endclass
+
+//sequencer
+
+//sequence
+class rseq_high extends uvm_sequence#(txn);
+`uvm_object_utils(rseq_high)
+function new(string name="rseq_high");
+super.new(name);
+endfunction
+task body();
+my_sequencer sqr;
+txn t;
+m_sequencer.lock(this);
+for(int i=1;i<=3;i++)
+begin
+t=txn::type_id::create("t");
+start_item(t);
+$display("rseq_high txn=%0d time=%0t",i,$time);
+if(i==1)
+begin
+$cast(sqr,m_sequencer);
+sqr.high_started=1;
+end
+finish_item(t);
+end
+m_sequencer.unlock(this);
+
+
+for(int i=1;i<=2;i++)
+begin
+txn t;
+t=txn::type_id::create("t");
+m_sequencer.lock(this);
+start_item(t);
+$display("rseq high txn=%0d time=%0t",i,$time);
+m_sequencer.unlock(this);
+finish_item(t);
+end
+endtask
+endclass
+
+
+class rseq_medium extends uvm_sequence#(txn);
+`uvm_object_utils(rseq_medium)
+function new(string name="rseq_medium");
+super.new(name);
+endfunction
+task body();
+txn t;
+t=txn::type_id::create("t");
+//start_item(t);
+for(int i=1;i<=6;i++)
+begin
+if(i%2==1)
+m_sequencer.lock(this);
+start_item(t);
+$display("rseq_medium txn=%0d time=%0t",i,$time);
+finish_item(t);
+if(i%2==0)
+m_sequencer.unlock(this);
+end
+endtask
+endclass
+
+
+class rseq_low extends uvm_sequence#(txn);
+`uvm_object_utils(rseq_low)
+function new(string name="rseq_low");
+super.new(name);
+endfunction
+task body();
+txn t;
+my_sequencer sqr;
+$cast(sqr,m_sequencer);
+wait(sqr.high_started==1);
+//m_sequencer.lock(this);
+t=txn::type_id::create("t");
+for(int i=1;i<=4;i++)
+begin
+start_item(t);
+$display("rseq_low txn=%0d time=%0t",i,$time);
+//m_sequencer.unlock(this);
+finish_item(t);
+end
+endtask
+endclass
+
+
+class rseq_burst extends uvm_sequence#(txn);
+`uvm_object_utils(rseq_burst)
+function new(string name="rseq_burst");
+super.new(name);
+endfunction
+task body();
+txn t;
+for(int i=1;i<=3;i++)
+begin
+m_sequencer.grab(this);
+t=txn::type_id::create("t");
+start_item(t);
+$display("rseq_burst txn=%0d time=%0t",i,$time);
+finish_item(t);
+m_sequencer.ungrab(this);
+end
+endtask
+endclass
+
+
+//sequencer
+
+class my_sequencer extends uvm_sequencer#(txn);
+`uvm_component_utils(my_sequencer)
+bit high_started=0;
+function new(string name="my_sequencer",uvm_component parent);
+super.new(name,parent);
+endfunction
+endclass
+
+//top
+module top();
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+initial
+begin
+run_test("test");
+end
+endmodule
+
+//test
+class test extends uvm_test;
+`uvm_component_utils(test)
+my_env env;
+function new(string name="test",uvm_component parent);
+super.new(name,parent);
+endfunction
+function void build_phase(uvm_phase phase);
+super.build_phase(phase);
+env=my_env::type_id::create("env",this);
+endfunction
+task run_phase(uvm_phase phase);
+rseq_high s_high;
+rseq_medium s_medium;
+rseq_low s_low;
+rseq_burst s_burst;
+phase.raise_objection(this);
+s_high=rseq_high::type_id::create("s_high");
+s_medium=rseq_medium::type_id::create("s_medium");
+s_low=rseq_low::type_id::create("s_low");
+s_burst=rseq_burst::type_id::create("s_burst");
+env,sqr.set_arbitration(SEQ_ARB_STRICT_FIFO);
+fork
+$display("arbitration=%p",env.sqr.get_arbitration());
+s_high.start(env.sqr,,500);
+s_medium.start(env.sqr,,300);
+s_low.start(env.sqr,,200);
+s_burst.start(env.sqr,,400);
+join
+phase.drop_objection(this);
+//end
+endtask
+endclass
+
+
+//driver
+class driver extends uvm_driver#(txn);
+`uvm_component_utils(driver)
+function new(string name="driver",uvm_component parent);
+super.new(name,parent);
+endfunction
+task run_phase(uvm_phase phase);
+txn t;
+forever
+begin
+seq_item_port.get_next_item(t);
+#5;
+seq_item_port.item_done();
+end
+endtask
+endclass
+
+//env
+class my_env extends uvm_env;
+`uvm_component_utils(my_env)
+driver drv;
+my_sequencer sqr;
+function new(string name="my_env",uvm_component parent);
+super.new(name,parent);
+endfunction
+function void build_phase(uvm_phase phase);
+super.build_phase(phase);
+drv=driver::type_id::create("drv",this);
+sqr=my_sequencer::type_id::create("sqr",this);
+endfunction
+function void connect_phase(uvm_phase phase);
+super.connect_phase(phase);
+drv.seq_item_port.connect(sqr.seq_item_export);
+endfunction
+endclass
+
+
+
+
+
+
