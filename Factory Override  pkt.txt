@@ -1,0 +1,126 @@
+Factory Override / Instance Override
+Question:
+Base class: packet
+Derived classes: short_packet, long_packet
+Requirement:
+1. All packets created in Agent_A must become short_packet.
+2. All packets created in Agent_B must become long_packet.
+Explain instance override and provide the SystemVerilog/UVM code implementation.
+
+
+
+//Test
+
+
+class my_test extends uvm_test;
+`uvm_component_utils(my_test)
+env eh;
+function new(string name="my_test",uvm_component parent);
+super.new(name,parent);
+endfunction
+function void build_phase(uvm_phase phase);
+super.build_phase(phase);
+uvm_factory::get().set_inst_override_by_type(packet::get_type(),short_packet::get_type(),"uvm_test_top.eh.a*");
+uvm_factory::get().set_inst_override_by_type(packet::get_type(),long_packet::get_type(),"uvm_test_top.eh.b*");
+//pktA=packet::type_id::create("pktA",this);
+//pktB=packet::type_id::create("pktB",this);
+eh=env::type_id::create("eh",this);
+
+//`uvm_info("my_test",$sformatf("pktA=%s",pktA.get_type_name()),UVM_LOW)
+//`uvm_info("my_test",$sformatf("pktB=%s",pktB.get_type_name()),UVM_LOW)
+endfunction
+endclass
+
+
+//env
+class env extends uvm_env;
+`uvm_component_utils(env)
+agent_a a;
+agent_b b;
+function new(string name="env",uvm_component parent);
+super.new(name,parent);
+endfunction
+function void build_phase(uvm_phase phase);
+super.build_phase(phase);
+a=agent_a::type_id::create("a",this);
+b=agent_b::type_id::create("b",this);
+endfunction
+endclass
+
+
+/agent
+class agent_a extends uvm_agent;
+`uvm_component_utils(agent_a)
+packet pkt;
+function new(string name="agent_a",uvm_component parent);
+super.new(name,parent);
+endfunction
+function void build_phase(uvm_phase phase);
+super.build_phase(phase);
+pkt=packet::type_id::create("pkt",this);
+`uvm_info("agent_a",$sformatf("created:%s",pkt.get_type_name()),UVM_LOW)
+endfunction
+endclass
+
+
+class agent_b extends uvm_agent;
+`uvm_component_utils(agent_b)
+packet pkt;
+function new(string name="agent_b",uvm_component parent);
+super.new(name,parent);
+endfunction
+function void build_phase(uvm_phase phase);
+super.build_phase(phase);
+pkt=packet::type_id::create("pkt",this);
+`uvm_info("agent_b",$sformatf("created:%s",pkt.get_type_name()),UVM_LOW)
+endfunction
+endclass
+
+
+//packet
+
+class packet extends uvm_component;
+                                    `uvm_component_utils(packet)
+                                    function new(string name="packet",uvm_component parent);
+                                      super.new(name,parent);
+                                    endfunction
+                                  endclass
+                                  class short_packet extends packet;
+                                    `uvm_component_utils(short_packet)
+                                    function new(string name="short_packet",uvm_component parent);
+super.new(name,parent);
+                                      endfunction
+                                  endclass
+                                  
+                                  class long_packet extends packet;
+                                    `uvm_component_utils(long_packet)
+                                    function new(string name="long_packet",uvm_component parent);
+super.new(name,parent);
+
+                                      endfunction
+                                  endclass
+                                      
+
+
+
+//test_pkg
+package test_pkg;
+import uvm_pkg::*;
+`include "uvm_macros.svh"
+`include "packet.sv"
+`include "agent.sv"
+`include "env.sv"
+`include "test.sv"
+endpackage
+
+
+//top
+module tb();
+import uvm_pkg::*;
+`include "uvm_macros.svh"
+  initial
+    begin
+      run_test("my_test");
+    end
+endmodule
+
